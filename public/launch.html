@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OT Safety Gate — SMART Launch</title>
+</head>
+<body>
+  <!--
+    SMART on FHIR Launch Entry Point
+    
+    This page is the entry URL registered with the SMART App Launcher.
+    When launched from an EHR, this page receives ?iss=...&launch=... 
+    parameters and begins the OAuth2 + PKCE authorization flow.
+    
+    The fhirclient library handles the full flow:
+    1. Reads iss and launch from URL params
+    2. Fetches .well-known/smart-configuration
+    3. Generates PKCE code_verifier + code_challenge
+    4. Redirects to the authorization endpoint
+    5. On callback, exchanges code for token
+    6. Redirects to the main app with the client ready
+  -->
+  <script type="module">
+    import FHIR from '../node_modules/fhirclient/lib/entry/browser.js';
+
+    FHIR.oauth2.authorize({
+      clientId: 'ot-safety-gate',
+      scope: [
+        'launch',
+        'openid',
+        'fhirUser',
+        'patient/Patient.read',
+        'patient/Procedure.read',
+        'patient/Condition.read',
+        'patient/Consent.read',
+        'patient/AllergyIntolerance.read',
+        'patient/Observation.read',
+        'patient/ServiceRequest.read',
+        'patient/Composition.write',
+        'patient/DocumentReference.write'
+      ].join(' '),
+      redirectUri: './index.html',
+      completeInTarget: true
+    });
+  </script>
+  <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#566573;">
+    <p>Connecting to EHR...</p>
+  </div>
+</body>
+</html>
