@@ -14,7 +14,6 @@ describe('safetyEngine', () => {
   const validDiagnosis: import('../../types/safety').DiagnosisInfo = {
     id: 'diag-1',
     code: { code: '54321', display: 'Appendicitis', system: 'http://snomed.info/sct' },
-    status: 'active',
     clinicalStatus: 'active',
     matchesProcedure: true
   };
@@ -27,9 +26,9 @@ describe('safetyEngine', () => {
   };
 
   const validLabs: import('../../types/safety').LabResult[] = [
-    { id: 'l1', name: 'Platelets', loincCode: LOINC_CODES.PLATELET_COUNT, value: 200, unit: '10*3/uL', status: 'normal', effectiveDate: new Date().toISOString() },
-    { id: 'l2', name: 'PT/INR', loincCode: LOINC_CODES.PT_INR, value: 1.0, unit: '', status: 'normal', effectiveDate: new Date().toISOString() },
-    { id: 'l3', name: 'Hemoglobin', loincCode: LOINC_CODES.HEMOGLOBIN, value: 14, unit: 'g/dL', status: 'normal', effectiveDate: new Date().toISOString() }
+    { name: 'Platelets', loincCode: LOINC_CODES.PLATELET_COUNT, value: 200, unit: '10*3/uL', status: 'normal', effectiveDate: new Date().toISOString() },
+    { name: 'PT/INR', loincCode: LOINC_CODES.PT_INR, value: 1.0, unit: '', status: 'normal', effectiveDate: new Date().toISOString() },
+    { name: 'Hemoglobin', loincCode: LOINC_CODES.HEMOGLOBIN, value: 14, unit: 'g/dL', status: 'normal', effectiveDate: new Date().toISOString() }
   ];
 
   it('should pass with all valid inputs', () => {
