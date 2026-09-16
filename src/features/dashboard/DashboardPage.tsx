@@ -1,8 +1,13 @@
+import { useEffect } from 'react';
 import { usePatient, useSafetyCheck } from '../../hooks/fhirHooks';
+import { useFhirClient } from '../../services/auth/FhirClientContext';
 import { PatientBanner } from '../../components/PatientBanner';
 import { SafetyCard } from '../../components/SafetyCard';
 
+import { logPatientAccess } from '../../services/auth/auditLogger';
+
 export function DashboardPage() {
+  const client = useFhirClient();
   const { data: patient, isLoading: patientLoading } = usePatient();
   const { safetyReport, isLoading: safetyLoading, error } = useSafetyCheck();
 
@@ -29,6 +34,13 @@ export function DashboardPage() {
   if (!patient || !safetyReport) {
     return null;
   }
+
+  // Effect to log patient access
+  useEffect(() => {
+    if (patient) {
+      logPatientAccess(client);
+    }
+  }, [patient, client]);
 
   return (
     <div>
