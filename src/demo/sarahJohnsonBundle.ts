@@ -27,11 +27,19 @@ export const sarahJohnsonBundle: any = {
         status: 'preparation',
         subject: { reference: 'Patient/sarah-johnson' },
         code: {
-          coding: [{
-            system: 'http://snomed.info/sct',
-            code: '609588000',
-            display: 'Total replacement of knee joint'
-          }]
+          coding: [
+            {
+              system: 'http://www.ama-assn.org/go/cpt',
+              code: '27447',
+              display: 'Arthroplasty, knee, condyle and plateau (Total Knee Arthroplasty)'
+            },
+            {
+              system: 'http://snomed.info/sct',
+              code: '609588000',
+              display: 'Total replacement of knee joint'
+            }
+          ],
+          text: 'Total Knee Arthroplasty'
         }
       }
     },

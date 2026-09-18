@@ -40,6 +40,19 @@ export interface ClinicalCode {
   display: string;
 }
 
+export interface ClinicalOverride {
+  /** Clinician name signing the override */
+  clinicianName: string;
+  /** Role or title (e.g., Attending Surgeon) */
+  role: string;
+  /** Clinical justification for proceeding despite warnings */
+  reason: string;
+  /** ISO timestamp when override was signed */
+  timestamp: string;
+  /** Warnings acknowledged during override */
+  acknowledgedWarnings: string[];
+}
+
 export interface SafetyReport {
   /** Patient ID this report is for */
   patientId: string;
@@ -51,6 +64,8 @@ export interface SafetyReport {
   overallDecision: OverallSafetyDecision;
   /** Overall decision summary message */
   overallMessage: string;
+  /** Optional clinician override details if warnings were overridden */
+  override?: ClinicalOverride;
 }
 
 export interface LabResult {

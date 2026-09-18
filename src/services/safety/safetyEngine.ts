@@ -76,16 +76,19 @@ function evaluateProcedure(procedures: SafetyInputs['procedures']): CheckResult 
     result.summary = 'Procedure is missing clinical code';
     result.details.push({
       severity: 'warning',
-      message: `Procedure found ("${proc.code.display}") but lacks a SNOMED/standard code for verification.`,
+      message: `Procedure found ("${proc.code.display}") but lacks a CPT/SNOMED standard code for verification.`,
     });
     return result;
   }
 
+  const isCpt = proc.code.system.includes('cpt') || (/^\d{5}$/.test(proc.code.code));
+  const procSystemLabel = isCpt ? 'CPT' : (proc.code.system.includes('snomed') ? 'SNOMED CT' : 'Clinical Code');
+
   result.status = 'pass';
-  result.summary = 'Valid procedure scheduled';
+  result.summary = `Valid procedure scheduled (${procSystemLabel} ${proc.code.code})`;
   result.details.push({
     severity: 'success',
-    message: `${proc.code.display} (Scheduled: ${proc.scheduledDate ? new Date(proc.scheduledDate).toLocaleDateString() : 'TBD'})`,
+    message: `[${procSystemLabel} ${proc.code.code}] ${proc.code.display} (Scheduled: ${proc.scheduledDate ? new Date(proc.scheduledDate).toLocaleDateString() : 'TBD'})`,
     code: proc.code,
   });
 
@@ -113,7 +116,11 @@ function evaluateDiagnosis(
     return result;
   }
 
-  const procCode = procedures[0].code.code;
+  const proc = procedures[0];
+  const procCode = proc.code.code;
+  const isCpt = proc.code.system.includes('cpt') || (/^\d{5}$/.test(procCode));
+  const procSystemLabel = isCpt ? 'CPT' : (proc.code.system.includes('snomed') ? 'SNOMED CT' : 'Code');
+
   let matchFound = false;
   let matchedDiag = null;
 
@@ -130,7 +137,7 @@ function evaluateDiagnosis(
     result.summary = 'Diagnosis supports procedure';
     result.details.push({
       severity: 'success',
-      message: `Verified supporting active diagnosis: ${matchedDiag.code.display}`,
+      message: `Cross-check verified: [SNOMED CT ${matchedDiag.code.code}] "${matchedDiag.code.display}" supports scheduled procedure [${procSystemLabel} ${procCode}]`,
       code: matchedDiag.code,
     });
   } else if (diagnoses.length > 0) {
@@ -138,7 +145,7 @@ function evaluateDiagnosis(
     result.summary = 'No matching diagnosis found';
     result.details.push({
       severity: 'warning',
-      message: `Patient has ${diagnoses.length} active conditions, but none map to the scheduled procedure.`,
+      message: `Patient has ${diagnoses.length} active conditions in EHR, but none clinically validate scheduled procedure [${procSystemLabel} ${procCode}].`,
     });
   } else {
     result.status = 'fail';

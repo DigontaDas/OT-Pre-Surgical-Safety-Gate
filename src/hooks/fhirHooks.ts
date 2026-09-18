@@ -87,6 +87,17 @@ export function useSafetyCheck() {
       allergies,
       labs,
     });
+
+    if (patientId) {
+      try {
+        const saved = sessionStorage.getItem(`clinical_override_${patientId}`);
+        if (saved) {
+          safetyReport.override = JSON.parse(saved);
+        }
+      } catch (e) {
+        // ignore parse error
+      }
+    }
   }
 
   return {

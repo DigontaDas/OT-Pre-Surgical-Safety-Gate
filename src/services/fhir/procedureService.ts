@@ -2,9 +2,9 @@
  * Procedure Service — FHIR Procedure and ServiceRequest resource operations
  */
 import type Client from 'fhirclient/lib/Client';
-import type { Bundle, BundleEntry, Procedure, ServiceRequest } from 'fhir/r4';
+import type { Bundle, BundleEntry, Procedure, ServiceRequest, Coding } from 'fhir/r4';
 import type { ProcedureInfo, ClinicalCode } from '../../types/safety';
-import { SNOMED_SYSTEM } from '../../config/snomedMappings';
+import { SNOMED_SYSTEM, CPT_SYSTEM, CPT_SYSTEMS } from '../../config/snomedMappings';
 
 /**
  * Fetch scheduled/preparation procedures for the current patient.
@@ -53,18 +53,32 @@ export async function fetchProcedures(client: Client): Promise<ProcedureInfo[]> 
   return results;
 }
 
+function extractProcedureCoding(codings?: Coding[], fallbackText?: string): ClinicalCode {
+  if (!codings || codings.length === 0) {
+    return { system: '', code: '', display: fallbackText || 'Unknown Procedure' };
+  }
+
+  // Look for CPT coding (official procedure terminology) first, then SNOMED CT
+  const cptCoding = codings.find(c => 
+    CPT_SYSTEMS.includes(c.system || '') || c.system?.toLowerCase().includes('cpt')
+  );
+  const snomedCoding = codings.find(c => c.system === SNOMED_SYSTEM);
+  const selected = cptCoding || snomedCoding || codings[0];
+
+  return {
+    system: selected.system || (cptCoding ? CPT_SYSTEM : ''),
+    code: selected.code || '',
+    display: selected.display || fallbackText || selected.code || 'Unknown Procedure'
+  };
+}
+
 /**
  * Extract a coded ProcedureInfo from a FHIR Procedure resource.
  */
 function toProcedureInfo(proc: Procedure): ProcedureInfo | null {
   if (!proc.id) return null;
 
-  const coding = proc.code?.coding?.find(c => c.system === SNOMED_SYSTEM)
-    || proc.code?.coding?.[0];
-
-  const code: ClinicalCode = coding
-    ? { system: coding.system || '', code: coding.code || '', display: coding.display || proc.code?.text || '' }
-    : { system: '', code: '', display: proc.code?.text || 'Unknown Procedure' };
+  const code = extractProcedureCoding(proc.code?.coding, proc.code?.text);
 
   return {
     id: proc.id,
@@ -82,12 +96,7 @@ function toProcedureInfo(proc: Procedure): ProcedureInfo | null {
 function serviceRequestToProcedureInfo(req: ServiceRequest): ProcedureInfo | null {
   if (!req.id) return null;
 
-  const coding = req.code?.coding?.find(c => c.system === SNOMED_SYSTEM)
-    || req.code?.coding?.[0];
-
-  const code: ClinicalCode = coding
-    ? { system: coding.system || '', code: coding.code || '', display: coding.display || req.code?.text || '' }
-    : { system: '', code: '', display: req.code?.text || 'Unknown Procedure' };
+  const code = extractProcedureCoding(req.code?.coding, req.code?.text);
 
   return {
     id: req.id,
@@ -96,3 +105,4 @@ function serviceRequestToProcedureInfo(req: ServiceRequest): ProcedureInfo | nul
     scheduledDate: req.authoredOn || undefined,
   };
 }
+

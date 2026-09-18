@@ -4,7 +4,7 @@
 import type Client from 'fhirclient/lib/Client';
 import type { Bundle, BundleEntry, AllergyIntolerance } from 'fhir/r4';
 import type { AllergyInfo, ClinicalCode } from '../../types/safety';
-import { SNOMED_SYSTEM, isSurgicalAntibiotic } from '../../config/snomedMappings';
+import { SNOMED_SYSTEM, RXNORM_SYSTEMS, isSurgicalAntibiotic } from '../../config/snomedMappings';
 
 /**
  * Fetch allergies for the current patient.
@@ -39,17 +39,19 @@ export async function fetchAllergies(client: Client): Promise<AllergyInfo[]> {
 function toAllergyInfo(allergy: AllergyIntolerance): AllergyInfo | null {
   if (!allergy.id) return null;
 
-  const coding = allergy.code?.coding?.find(c => c.system === SNOMED_SYSTEM)
-    || allergy.code?.coding?.[0];
+  const coding = allergy.code?.coding?.find(c => 
+    c.system === SNOMED_SYSTEM || (c.system && RXNORM_SYSTEMS.includes(c.system))
+  ) || allergy.code?.coding?.[0];
 
   const code: ClinicalCode | undefined = coding
     ? { system: coding.system || '', code: coding.code || '', display: coding.display || allergy.code?.text || '' }
     : undefined;
 
   const substanceStr = code?.display || allergy.code?.text || 'Unknown Substance';
-  const isAntibiotic = code && code.system === SNOMED_SYSTEM
-    ? isSurgicalAntibiotic(code.code)
+  const isAntibiotic = code
+    ? isSurgicalAntibiotic(code.code, code.system)
     : false;
+
 
   return {
     substance: substanceStr,
